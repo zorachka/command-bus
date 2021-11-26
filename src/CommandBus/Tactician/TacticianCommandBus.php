@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Zorachka\Framework\CommandBus\Tactician;
 
-use Zorachka\Framework\CommandBus\CommandBus;
 use League\Tactician\CommandBus as LeagueTacticianCommandBus;
+use Zorachka\Framework\CommandBus\CommandBus;
 
 final class TacticianCommandBus implements CommandBus
 {
@@ -21,6 +21,6 @@ final class TacticianCommandBus implements CommandBus
      */
     public function handle(object $command)
     {
-        $this->commandBus->handle($command);
+        return $this->commandBus->handle($command);
     }
 }
