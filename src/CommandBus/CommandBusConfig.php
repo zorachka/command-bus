@@ -7,15 +7,19 @@ namespace Zorachka\Framework\CommandBus;
 final class CommandBusConfig
 {
     private array $handlersMap;
+    private array $middlewares;
 
-    private function __construct(array $handlersMap)
+    private function __construct(array $handlersMap, array $middlewares)
     {
         $this->handlersMap = $handlersMap;
+        $this->middlewares = $middlewares;
     }
 
-    public static function withDefaults(array $handlersMap = []): self
-    {
-        return new self($handlersMap);
+    public static function withDefaults(
+        array $handlersMap = [],
+        array $middlewares = [],
+    ): self {
+        return new self($handlersMap, $middlewares);
     }
 
     /**
@@ -37,5 +41,25 @@ final class CommandBusConfig
     public function handlersMap(): array
     {
         return $this->handlersMap;
+    }
+
+    /**
+     * @param class-string $middlewareClassName
+     * @return $this
+     */
+    public function withMiddleware(string $middlewareClassName): self
+    {
+        $new = clone $this;
+        $new->middlewares[] = $middlewareClassName;
+
+        return $new;
+    }
+
+    /**
+     * @return array
+     */
+    public function middlewares(): array
+    {
+        return $this->middlewares;
     }
 }

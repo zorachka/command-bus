@@ -24,6 +24,9 @@ final class CommandBusServiceProvider implements ServiceProvider
     public static function getDefinitions(): array
     {
         return [
+            LoggingMiddleware::class => static function (ContainerInterface $container) {
+                return new LoggingMiddleware($container->get(LoggerInterface::class));
+            },
             CommandBus::class => static function (ContainerInterface $container) {
                 /** @var CommandBusConfig $config */
                 $config = $container->get(CommandBusConfig::class);
@@ -44,16 +47,24 @@ final class CommandBusServiceProvider implements ServiceProvider
                 // Create the middleware that executes commands with Handlers
                 $commandHandlerMiddleware = new CommandHandlerMiddleware($nameExtractor, $locator, $inflector);
 
-                $tacticianCommandBus = new LeagueTacticianCommandBus([
-                    new LoggingMiddleware($container->get(LoggerInterface::class)),
-                    new LockingMiddleware(),
-//                    new TransactionMiddleware($container->get(Connection::class)),
-                    $commandHandlerMiddleware,
-                ]);
+                $middlewares = \array_map(function ($middlewareClassName) use ($container) {
+                    return $container->get($middlewareClassName);
+                }, $config->middlewares());
+                $tacticianCommandBus = new LeagueTacticianCommandBus(
+                    \array_merge($middlewares, [
+                        $commandHandlerMiddleware,
+                    ])
+                );
 
                 return new TacticianCommandBus($tacticianCommandBus);
             },
-            CommandBusConfig::class => static fn() => CommandBusConfig::withDefaults(),
+            CommandBusConfig::class => static fn() => CommandBusConfig::withDefaults(
+                [],
+                [
+                    LoggingMiddleware::class,
+                    LockingMiddleware::class,
+                ]
+            ),
         ];
     }
 
