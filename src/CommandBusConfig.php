@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Zorachka\Framework\CommandBus;
+namespace Zorachka\CommandBus;
 
 final class CommandBusConfig
 {
+    /**
+     * @var array<class-string, class-string>
+     */
     private array $handlersMap;
+    /**
+     * @var array<class-string>
+     */
     private array $middlewares;
 
     private function __construct(array $handlersMap, array $middlewares)
@@ -15,6 +21,10 @@ final class CommandBusConfig
         $this->middlewares = $middlewares;
     }
 
+    /**
+     * @param array<class-string, class-string> $handlersMap
+     * @param class-string[] $middlewares
+     */
     public static function withDefaults(
         array $handlersMap = [],
         array $middlewares = [],
@@ -36,7 +46,7 @@ final class CommandBusConfig
     }
 
     /**
-     * @return array
+     * @return array<class-string, class-string>
      */
     public function handlersMap(): array
     {
@@ -56,7 +66,7 @@ final class CommandBusConfig
     }
 
     /**
-     * @return array
+     * @return class-string[]
      */
     public function middlewares(): array
     {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Zorachka\Framework\CommandBus\Tactician;
+namespace Zorachka\CommandBus\Tactician;
 
 use League\Tactician\CommandBus as LeagueTacticianCommandBus;
-use Zorachka\Framework\CommandBus\CommandBus;
+use Zorachka\CommandBus\CommandBus;
 
 final class TacticianCommandBus implements CommandBus
 {
@@ -16,11 +16,8 @@ final class TacticianCommandBus implements CommandBus
         $this->commandBus = $commandBus;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function handle(object $command)
+    public function handle(object $command): void
     {
-        return $this->commandBus->handle($command);
+        $this->commandBus->handle($command);
     }
 }

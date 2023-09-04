@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Zorachka\Framework\CommandBus\Tactician\Middleware;
+namespace Zorachka\CommandBus\Tactician\Middleware;
 
-use Psr\Log\LoggerInterface;
 use League\Tactician\Middleware;
+use Psr\Log\LoggerInterface;
 
 final class LoggingMiddleware implements Middleware
 {
@@ -18,7 +18,7 @@ final class LoggingMiddleware implements Middleware
 
     public function execute($command, callable $next)
     {
-        $commandClass = get_class($command);
+        $commandClass = $command::class;
 
         $this->logger->debug(\sprintf("Starting %s", $commandClass));
         $returnValue = $next($command);

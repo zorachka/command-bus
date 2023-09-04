@@ -2,30 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Zorachka\Framework\CommandBus;
+namespace Zorachka\CommandBus;
 
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
+use League\Tactician\CommandBus as LeagueTacticianCommandBus;
 use League\Tactician\Handler\CommandHandlerMiddleware;
 use League\Tactician\Handler\CommandNameExtractor\ClassNameExtractor;
 use League\Tactician\Handler\Locator\InMemoryLocator;
 use League\Tactician\Handler\MethodNameInflector\InvokeInflector;
+use League\Tactician\Middleware;
 use League\Tactician\Plugins\LockingMiddleware;
-use League\Tactician\CommandBus as LeagueTacticianCommandBus;
-use Zorachka\Framework\CommandBus\Tactician\Middleware\LoggingMiddleware;
-use Zorachka\Framework\CommandBus\Tactician\TacticianCommandBus;
-use Zorachka\Framework\Container\ServiceProvider;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Zorachka\CommandBus\Tactician\Middleware\LoggingMiddleware;
+use Zorachka\CommandBus\Tactician\TacticianCommandBus;
+use Zorachka\Container\ServiceProvider;
+use Zorachka\Environment\Environment;
+use Zorachka\Environment\EnvironmentName;
 
 final class CommandBusServiceProvider implements ServiceProvider
 {
-    /**
-     * @inheritDoc
-     */
     public static function getDefinitions(): array
     {
         return [
             LoggingMiddleware::class => static function (ContainerInterface $container) {
-                return new LoggingMiddleware($container->get(LoggerInterface::class));
+                /** @var LoggerInterface $logger */
+                $logger = $container->get(LoggerInterface::class);
+
+                return new LoggingMiddleware($logger);
             },
             CommandBus::class => static function (ContainerInterface $container) {
                 /** @var CommandBusConfig $config */
@@ -38,7 +41,9 @@ final class CommandBusServiceProvider implements ServiceProvider
                 // Choose our locator and register our command
                 $locator = new InMemoryLocator();
                 foreach ($handlers as $commandClassName => $handlerClassName) {
-                    $locator->addHandler($container->get($handlerClassName), $commandClassName);
+                    /** @var object $handler */
+                    $handler = $container->get($handlerClassName);
+                    $locator->addHandler($handler, $commandClassName);
                 }
 
                 // Choose our Handler naming strategy
@@ -47,9 +52,8 @@ final class CommandBusServiceProvider implements ServiceProvider
                 // Create the middleware that executes commands with Handlers
                 $commandHandlerMiddleware = new CommandHandlerMiddleware($nameExtractor, $locator, $inflector);
 
-                $middlewares = \array_map(function ($middlewareClassName) use ($container) {
-                    return $container->get($middlewareClassName);
-                }, $config->middlewares());
+                /** @var Middleware[] $middlewares */
+                $middlewares = \array_map(static fn ($middlewareClassName) => $container->get($middlewareClassName), $config->middlewares());
                 $tacticianCommandBus = new LeagueTacticianCommandBus(
                     \array_merge($middlewares, [
                         $commandHandlerMiddleware,
@@ -58,19 +62,28 @@ final class CommandBusServiceProvider implements ServiceProvider
 
                 return new TacticianCommandBus($tacticianCommandBus);
             },
-            CommandBusConfig::class => static fn() => CommandBusConfig::withDefaults(
-                [],
-                [
-                    LoggingMiddleware::class,
-                    LockingMiddleware::class,
-                ]
-            ),
+            CommandBusConfig::class => static function (ContainerInterface $container) {
+                /** @var Environment $environment */
+                $environment = $container->get(Environment::class);
+
+                $handlersMap = [];
+                $middlewares = [];
+
+                // Development middlewares
+                if ($environment->isA(EnvironmentName::DEVELOPMENT)) {
+                    $middlewares[] = LoggingMiddleware::class;
+                }
+
+                $middlewares[] = LockingMiddleware::class;
+
+                return CommandBusConfig::withDefaults(
+                    $handlersMap,
+                    $middlewares
+                );
+            },
         ];
     }
 
-    /**
-     * @inheritDoc
-     */
     public static function getExtensions(): array
     {
         return [];
