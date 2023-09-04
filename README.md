@@ -2,8 +2,8 @@
     <a href="https://github.com/zorachka" target="_blank">
         <img src="https://avatars0.githubusercontent.com/u/86768962" height="240px">
     </a>
-    <h1 align="center">Zorachka Command Bust</h1>
-    <br>
+    <h1 align="center">Zorachka Command Bus</h1>
+    <br />
 </p>
 
 This package provides ...
