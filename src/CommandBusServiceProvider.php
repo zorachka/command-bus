@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 use Zorachka\CommandBus\Tactician\Middleware\LoggingMiddleware;
 use Zorachka\CommandBus\Tactician\TacticianCommandBus;
 use Zorachka\Container\ServiceProvider;
-use Zorachka\Environment\Environment;
+use Zorachka\Environment\CurrentEnvironment;
 use Zorachka\Environment\EnvironmentName;
 
 final class CommandBusServiceProvider implements ServiceProvider
@@ -63,8 +63,8 @@ final class CommandBusServiceProvider implements ServiceProvider
                 return new TacticianCommandBus($tacticianCommandBus);
             },
             CommandBusConfig::class => static function (ContainerInterface $container) {
-                /** @var Environment $environment */
-                $environment = $container->get(Environment::class);
+                /** @var CurrentEnvironment $environment */
+                $environment = $container->get(CurrentEnvironment::class);
 
                 $handlersMap = [];
                 $middlewares = [];
